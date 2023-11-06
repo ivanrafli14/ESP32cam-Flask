@@ -14,9 +14,9 @@
             <hr>
             <form class="form" method="post" action="/addprsn_submit">
                 <div class="form-group row">
-                    <label for="txtnbr" class="col-sm-2 col-form-label">Person Id</label>
+                    <label for="txtnbr" class="col-sm-2 col-form-label">NIM</label>
                     <div class="col-sm-2">
-                        <input type="text" class="form-control" id="txtnbr" name="txtnbr" value={{ newnbr }} readonly>
+                        <input type="text" class="form-control" id="txtnbr" name="txtnbr" required>
                     </div>
                 </div>
                 <div class="form-group row">
@@ -26,12 +26,15 @@
                     </div>
                 </div>
                 <div class="form-group row">
-                    <label for="optskill" class="col-sm-2 col-form-label">Skill</label>
+                    <label for="optskill" class="col-sm-2 col-form-label">Mata Kuliah</label>
                     <div class="col-sm-4">
                         <select class="form-control" name="optskill" id="optskill">
-                            <option value="SOFTWARE">Software</option>
-                            <option value="HARDWARE">Hardware</option>
-                            <option value="ELECTRICAL">Electrical</option>
+                            <option value="RE2">Rangkaian Elektronika II</option>
+                            <option value="SISLIN">Sistem Linier</option>
+                            <option value="SISMIK">Sistem Mikrokontroller</option>
+                            <option value="FPGA">Pemrograman FPGA</option>
+                            <option value="KWN">Kewarganegaraan	</option>
+
                         </select>
                     </div>
                 </div>

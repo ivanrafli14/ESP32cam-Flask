@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, redirect, url_for, Response, jsonify
+from flask import Flask, render_template, request, session, redirect, url_for, Response, jsonify, flash
 import mysql.connector
 import cv2
 from PIL import Image
@@ -6,6 +6,7 @@ import numpy as np
 import os
 import time
 from datetime import date
+from pyzbar.pyzbar import decode
 
 app = Flask(__name__)
 
@@ -148,6 +149,7 @@ def face_recognition():  # generate frame by frame from camera
 
                     mycursor.execute("insert into accs_hist (accs_date, accs_prsn) values('" + str(
                         date.today()) + "', '" + pnbr + "')")
+                    mycursor.execute("UPDATE prs_mstr SET prs_active = 'HADIR' WHERE prs_nbr = " + pnbr)
                     mydb.commit()
 
                     cv2.putText(img, pname + ' | ' + pskill, (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
@@ -180,7 +182,7 @@ def face_recognition():  # generate frame by frame from camera
 
     wCam, hCam = 400, 400
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture('http://192.168.43.117:81/stream')
     cap.set(3, wCam)
     cap.set(4, hCam)
 
@@ -203,6 +205,54 @@ def face_recognition():  # generate frame by frame from camera
         key = cv2.waitKey(1)
         if key == 27:
             break
+
+def qrcode_reader():
+    cap = cv2.VideoCapture('http://192.168.43.117:81/stream')
+    wCam, hCam = 400, 400
+    cap.set(3, wCam)
+    cap.set(4, hCam)
+    prev = ""
+    now = ""
+    isScanned = False
+
+    while True:
+        ret, img = cap.read()
+        for code in decode(img):
+            decoded_data = code.data.decode("utf-8")
+            rect_pts = code.rect
+
+            if decoded_data :
+                now = str(decoded_data)
+                pts = np.array([code.polygon], np.int32)
+                mycursor.execute("select * from prs_mstr where prs_nbr = " + str(decoded_data))
+                result = mycursor.fetchone()
+
+                cv2.polylines(img,[pts], True, (0,255,0), 3)
+
+                if result is None :
+                    cv2.putText(img, str(decoded_data) + " UNKNOWN", (rect_pts[0], rect_pts[1]), cv2.FONT_HERSHEY_SIMPLEX, 1,
+                                (0, 0, 255), 2)
+                else :
+                    cv2.putText(img,str(decoded_data), (rect_pts[0], rect_pts[1]), cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2 )
+
+
+                if result is not None and now != prev:
+                    mycursor.execute("insert into accs_hist (accs_date, accs_prsn) values('" + str(
+                        date.today()) + "', '" + str(decoded_data) + "')")
+                    mycursor.execute("UPDATE prs_mstr SET prs_active = 'HADIR' WHERE prs_nbr = " + str(decoded_data))
+
+                    mydb.commit()
+                    isScanned = True
+                    prev = now
+                    now = ""
+
+        frame = cv2.imencode('.jpg', img)[1].tobytes()
+        yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+        key = cv2.waitKey(1)
+        if key == 27:
+            break
+
 
 
 @app.route('/')
@@ -306,6 +356,17 @@ def loadData():
     data = mycursor.fetchall()
 
     return jsonify(response=data)
+
+
+@app.route('/qrcode')
+def qrcode():
+    return render_template('qrcode_page.html')
+
+
+@app.route('/qrcode_video')
+def qrcode_video():
+    # Video streaming route. Put this in the src attribute of an img tag
+    return Response(qrcode_reader(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 if __name__ == "__main__":
