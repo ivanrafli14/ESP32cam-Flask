@@ -1,56 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full smooth-scroll">
+
 <head>
-    {% include "head.html" %}
+  {% include "head.html" %}
 </head>
-<body>
 
-{% include "navbar.html" %}
+<body class="bg-sea2 min-h-screen bg-cover">
 
-<section class="py-1">
-    <div class="row mt-5">
-        <div class="col-lg-8 offset-lg-2">
-            <h3>Personnel Data</h3>
-            <hr>
-            <div class="row">
-                <div class="col-lg-4">
-                    <a href="/addprsn" type="button" class="btn btn-success btn-lg"><b>Add Personnel</b></a>
-                </div>
-                <div class="col-lg-4">
-                    <a href="/qrcode" type="button" class="btn btn-warning btn-lg"><b>QRCode Scanner</b></a>
-                </div>
-                <div class="col-lg-4">
-                    <a href="/fr_page" type="button" class="btn btn-info btn-lg"><b>Face Recognition</b></a>
-                </div>
-            </div>
+  {% include "navbar.html" %}
 
-            <br>
-            <table class="table" style="width: 80%">
-                <thead>
-                    <tr>
-                        <th>NIM</th>
-                        <th>Name</th>
-                        <th>Course</th>
-                        <th>Status</th>
-                        <th>Timestamps</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in data %}
-                        <tr>
-                            <td>{{item[0]}}</td>
-                            <td>{{item[1]}}</td>
-                            <td>{{item[2]}}</td>
-                            <td>{{item[3]}}</td>
-                            <td>{{item[4]}}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-
-            </table>
+  <section class="relative">
+    <div class="flex py-10 mx-20 justify-center">
+      <div class="flex flex-col w-3/4 items-center">
+        <h3 class="text-center text-3xl font-semibold mb-10 text-gray-300 uppercase">Dashboard</h3>
+        <div class="flex gap-0.5">
+          <a href="/addprsn" type="button"
+            class="font-thin text-gray-400 px-4 py-1.5 rounded-t-xl flex items-center gap-2 bg-gradient-to-br from-gray-800/90 to-gray-900/90 hover:bg-gray-100"><img
+              src="./static/img/more.png" width="15"
+              style="filter: invert(99%) sepia(1%) saturate(2596%) hue-rotate(182deg) brightness(99%) contrast(86%);">Add
+            Person</a>
+          <a href="/fr_page" type="button"
+            class="font-thin text-gray-400 px-4 py-1.5 rounded-t-xl flex items-center gap-2 bg-gradient-to-br from-gray-800/90 to-gray-900/90 hover:bg-gray-100"><img
+              src="./static/img/face-scan.png" width="15"
+              style="filter: invert(99%) sepia(1%) saturate(2596%) hue-rotate(182deg) brightness(99%) contrast(86%);">Face Detection</a>
+          <a href="/qrcode" type="button"
+            class="font-thin text-gray-400 px-4 py-1.5 rounded-t-xl flex items-center gap-2 bg-gradient-to-br from-gray-800/90 to-gray-900/90 hover:bg-gray-100"><img
+              src="./static/img/scanner.png" width="15"
+              style="filter: invert(99%) sepia(1%) saturate(2596%) hue-rotate(182deg) brightness(99%) contrast(86%);">Scan
+            Barcode</a>
         </div>
+        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+          <table class="w-full text-sm text-left text-gray-400">
+            <thead class="uppercase bg-gray-700 rounded-lg text-gray-300">
+              <tr>
+                <th scope="col" class="px-6 py-3">NIM</th>
+                <th scope="col" class="px-6 py-3">Nama</th>
+                <th scope="col" class="px-6 py-3">Program Studi</th>
+                <th scope="col" class="px-6 py-3">Mata Kuliah</th>
+                <th scope="col" class="px-6 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in data %}
+              <tr class="bg-gray-800 border-gray-700 border-b">
+                <td scope="row" class="px-6 py-4 whitespace-nowrap">{{item[0]}}</td>
+                <td class="px-6 py-4">{{item[1]}}</td>
+                <td class="px-6 py-4">{{item[2]}}</td>
+                <td class="px-6 py-4">Sistem Mikrokontroller</td>
+                {% if item[3] == "HADIR": %}
+                <!--if block html code-->
+                  <td class="px -6 text-center py-4 bg-green-800 ">{{item[3]}}</td>
+                {% else %}
+                <!--else block html code-->
+                <td class="px-6 py-4 bg-red-800 ">{{item[3]}}</td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-</section>
+  </section>
+
+  <script src="./static/js/clock.js"></script>
 
 </body>
+
 </html>

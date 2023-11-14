@@ -13,6 +13,8 @@ app = Flask(__name__)
 cnt = 0
 pause_cnt = 0
 justscanned = False
+isSuccess = False
+username = ""
 
 mydb = mysql.connector.connect(
     host="localhost",
@@ -42,7 +44,7 @@ def generate_dataset(nbr):
             cropped_face = img[y:y + h, x:x + w]
         return cropped_face
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture("http://192.168.61.102:81/stream")
 
     mycursor.execute("select ifnull(max(img_id), 0) from img_dataset")
     row = mycursor.fetchone()
@@ -182,7 +184,7 @@ def face_recognition():  # generate frame by frame from camera
 
     wCam, hCam = 400, 400
 
-    cap = cv2.VideoCapture('http://192.168.43.117:81/stream')
+    cap = cv2.VideoCapture("http://192.168.61.102:81/stream")
     cap.set(3, wCam)
     cap.set(4, hCam)
 
@@ -207,44 +209,54 @@ def face_recognition():  # generate frame by frame from camera
             break
 
 def qrcode_reader():
-    cap = cv2.VideoCapture('http://192.168.43.117:81/stream')
+    cap = cv2.VideoCapture(0)
     wCam, hCam = 400, 400
     cap.set(3, wCam)
     cap.set(4, hCam)
     prev = ""
     now = ""
     isScanned = False
+    global isSuccess
+    global username
 
     while True:
         ret, img = cap.read()
-        for code in decode(img):
-            decoded_data = code.data.decode("utf-8")
-            rect_pts = code.rect
+        try :
+            for code in decode(img):
+                decoded_data = code.data.decode("utf-8")
+                rect_pts = code.rect
 
-            if decoded_data :
-                now = str(decoded_data)
-                pts = np.array([code.polygon], np.int32)
-                mycursor.execute("select * from prs_mstr where prs_nbr = " + str(decoded_data))
-                result = mycursor.fetchone()
+                if decoded_data:
+                    now = str(decoded_data)
+                    check = now.isalpha()
 
-                cv2.polylines(img,[pts], True, (0,255,0), 3)
+                    pts = np.array([code.polygon], np.int32)
+                    mycursor.execute("select * from prs_mstr where prs_nbr = " + now)
+                    result = mycursor.fetchone()
 
-                if result is None :
-                    cv2.putText(img, str(decoded_data) + " UNKNOWN", (rect_pts[0], rect_pts[1]), cv2.FONT_HERSHEY_SIMPLEX, 1,
-                                (0, 0, 255), 2)
-                else :
-                    cv2.putText(img,str(decoded_data), (rect_pts[0], rect_pts[1]), cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2 )
+                    cv2.polylines(img, [pts], True, (0, 255, 0), 3)
 
+                    if result is None:
+                        cv2.putText(img, str(decoded_data) + " UNKNOWN", (rect_pts[0], rect_pts[1]),cv2.FONT_HERSHEY_SIMPLEX, 1,(0, 0, 255), 2)
+                    else:
+                        cv2.putText(img, str(decoded_data), (rect_pts[0], rect_pts[1]), cv2.FONT_HERSHEY_SIMPLEX, 1,(0, 255, 0), 2)
 
-                if result is not None and now != prev:
-                    mycursor.execute("insert into accs_hist (accs_date, accs_prsn) values('" + str(
-                        date.today()) + "', '" + str(decoded_data) + "')")
-                    mycursor.execute("UPDATE prs_mstr SET prs_active = 'HADIR' WHERE prs_nbr = " + str(decoded_data))
+                    if result is not None and now != prev:
+                        # mycursor.execute("insert into accs_hist (accs_date, accs_prsn) values('" + str(
+                        #     date.today()) + "', '" + str(decoded_data) + "')")
+                        mycursor.execute("INSERT INTO accs_hist (accs_date, accs_prsn) VALUES (%s, %s)",(str(date.today()),  str(decoded_data)))
+                        mydb.commit()
 
-                    mydb.commit()
-                    isScanned = True
-                    prev = now
-                    now = ""
+                        mycursor.execute("UPDATE prs_mstr SET prs_active = 'HADIR' WHERE prs_nbr = " + str(decoded_data))
+                        mydb.commit()
+
+                        isSuccess = True
+                        username = result[1]
+                        isScanned = True
+                        prev = now
+                        now = ""
+        except Exception as e:
+            cv2.putText(img, "INVALID NIM", (5, 100), cv2.FONT_HERSHEY_SIMPLEX, 1,(0, 0, 255), 2)
 
         frame = cv2.imencode('.jpg', img)[1].tobytes()
         yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
@@ -253,7 +265,12 @@ def qrcode_reader():
         if key == 27:
             break
 
+@app.route('/getstatus')
+def getstatus():
+    global isSuccess
+    global username
 
+    return jsonify(isSuccess = isSuccess, username=username)
 
 @app.route('/')
 def home():

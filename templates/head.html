@@ -1,11 +1,29 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" type="text/css">
+<!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css"> -->
+<!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" type="text/css"> -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" type="text/css">
 
 <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+<!-- <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script> -->
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter&family=Nunito+Sans:opsz@6..12&display=swap');
+</style>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        backgroundImage: {
+          'sea2': 'url("./static/img/logo.jpeg")'
+        },
+        colors: {
+          clifford: '#da373d',
+        }
+      }
+    }
+  }
+</script>
 
-<title>Flask MySQL</title>
+<title>Presensi Digital</title>
