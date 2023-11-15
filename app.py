@@ -13,7 +13,7 @@ app = Flask(__name__)
 cnt = 0
 pause_cnt = 0
 justscanned = False
-isSuccess = False
+isSuccess = ""
 username = ""
 
 mydb = mysql.connector.connect(
@@ -44,7 +44,7 @@ def generate_dataset(nbr):
             cropped_face = img[y:y + h, x:x + w]
         return cropped_face
 
-    cap = cv2.VideoCapture("http://192.168.61.102:81/stream")
+    cap = cv2.VideoCapture("http://192.168.61.102/stream")
 
     mycursor.execute("select ifnull(max(img_id), 0) from img_dataset")
     row = mycursor.fetchone()
@@ -184,7 +184,7 @@ def face_recognition():  # generate frame by frame from camera
 
     wCam, hCam = 400, 400
 
-    cap = cv2.VideoCapture("http://192.168.61.102:81/stream")
+    cap = cv2.VideoCapture("http://192.168.61.102/stream")
     cap.set(3, wCam)
     cap.set(4, hCam)
 
@@ -209,7 +209,7 @@ def face_recognition():  # generate frame by frame from camera
             break
 
 def qrcode_reader():
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture("http://192.168.61.102/stream")
     wCam, hCam = 400, 400
     cap.set(3, wCam)
     cap.set(4, hCam)
@@ -238,6 +238,8 @@ def qrcode_reader():
 
                     if result is None:
                         cv2.putText(img, str(decoded_data) + " UNKNOWN", (rect_pts[0], rect_pts[1]),cv2.FONT_HERSHEY_SIMPLEX, 1,(0, 0, 255), 2)
+                        isSuccess = "false"
+                        username = ""
                     else:
                         cv2.putText(img, str(decoded_data), (rect_pts[0], rect_pts[1]), cv2.FONT_HERSHEY_SIMPLEX, 1,(0, 255, 0), 2)
 
@@ -250,13 +252,15 @@ def qrcode_reader():
                         mycursor.execute("UPDATE prs_mstr SET prs_active = 'HADIR' WHERE prs_nbr = " + str(decoded_data))
                         mydb.commit()
 
-                        isSuccess = True
+                        isSuccess = "true"
                         username = result[1]
                         isScanned = True
                         prev = now
                         now = ""
         except Exception as e:
             cv2.putText(img, "INVALID NIM", (5, 100), cv2.FONT_HERSHEY_SIMPLEX, 1,(0, 0, 255), 2)
+            isSuccess = "false"
+            username = ""
 
         frame = cv2.imencode('.jpg', img)[1].tobytes()
         yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
@@ -265,12 +269,17 @@ def qrcode_reader():
         if key == 27:
             break
 
-@app.route('/getstatus')
+@app.route('/getstatus', methods=['GET'])
 def getstatus():
     global isSuccess
     global username
+    status = isSuccess
+    name = username
 
-    return jsonify(isSuccess = isSuccess, username=username)
+    isSuccess = ""
+    username = ""
+
+    return jsonify(isSuccess=status, username=name),200
 
 @app.route('/')
 def home():
@@ -387,4 +396,4 @@ def qrcode_video():
 
 
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
